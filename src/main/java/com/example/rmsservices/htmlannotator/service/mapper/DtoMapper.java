@@ -29,12 +29,13 @@ public class DtoMapper {
     
     private static final Logger logger = LoggerFactory.getLogger(DtoMapper.class);
     
-    public AnnotationDetailsForCSV getAnnotationDetailsForCSV(AnnotationDetailsFromJSON annotationDetailsFromJSON, String fileName, String user, Integer diffStart, Integer diffEnd) {
+    public AnnotationDetailsForCSV getAnnotationDetailsForCSV(AnnotationDetailsFromJSON annotationDetailsFromJSON, String fileName, String user, Integer diffStart, Integer diffEnd,String oldData) {
 
         final AnnotationDetailsForCSV annotationDetailsForCSV = modelMapper.map(annotationDetailsFromJSON, AnnotationDetailsForCSV.class);
         annotationDetailsForCSV.setPosition((annotationDetailsFromJSON.getStart() - diffStart) + "-" + (annotationDetailsFromJSON.getEnd() - diffEnd));
         annotationDetailsForCSV.setDocument(fileName);
         annotationDetailsForCSV.setUser(user);
+        annotationDetailsForCSV.setText(oldData.substring(annotationDetailsFromJSON.getStart() - diffStart,annotationDetailsFromJSON.getEnd() - diffEnd));
         return annotationDetailsForCSV;
     }
     

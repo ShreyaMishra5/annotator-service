@@ -8,8 +8,19 @@ public class FileStorageProperties {
     private String annotateUploadDir;
     private String jsonUploadDir;
     private String csvUploadDir;
+    private String newFileUploadDir;
+    private String ERRORMD5_mainuploadDir;
+    private String ERRORMD5_newuploadDir;
 
-    public String getAnnotateUploadDir() {
+    public String getNewFileUploadDir() {
+		return newFileUploadDir;
+	}
+
+	public void setNewFileUploadDir(String newFileUploadDir) {
+		this.newFileUploadDir = newFileUploadDir;
+	}
+
+	public String getAnnotateUploadDir() {
         return annotateUploadDir;
     }
 
@@ -40,4 +51,20 @@ public class FileStorageProperties {
     public void setUploadDir(String uploadDir) {
         this.uploadDir = uploadDir;
     }
+
+	public String getERRORMD5_mainuploadDir() {
+		return ERRORMD5_mainuploadDir;
+	}
+
+	public void setERRORMD5_mainuploadDir(String eRRORMD5_mainuploadDir) {
+		ERRORMD5_mainuploadDir = eRRORMD5_mainuploadDir;
+	}
+
+	public String getERRORMD5_newuploadDir() {
+		return ERRORMD5_newuploadDir;
+	}
+
+	public void setERRORMD5_newuploadDir(String eRRORMD5_newuploadDir) {
+		ERRORMD5_newuploadDir = eRRORMD5_newuploadDir;
+	}
 }

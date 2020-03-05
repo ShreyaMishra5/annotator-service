@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -54,6 +55,9 @@ public class FileStorageService {
     public final Path annotatedFileStorageLocation;
     public final Path jsonFileStorageLocation;
     public final Path csvFileStorageLocation;
+    public final Path newFileFileStorageLocation;
+    public final Path ERRORMD5_mainupload;
+    public final Path ERRORMD5_newupload;
 
     public static final String TYPE_MAIN_FILE = "mainHTML";
     public static final String TYPE_ANNOTATED_FILE = "annotatedHTML";
@@ -77,12 +81,22 @@ public class FileStorageService {
                         .toAbsolutePath().normalize();
         this.csvFileStorageLocation = Paths.get(fileStorageProperties.getCsvUploadDir())
                         .toAbsolutePath().normalize();
+        this.newFileFileStorageLocation = Paths.get(fileStorageProperties.getNewFileUploadDir())
+                .toAbsolutePath().normalize();
+        this.ERRORMD5_mainupload= Paths.get(fileStorageProperties.getERRORMD5_mainuploadDir())
+                .toAbsolutePath().normalize();
+        this.ERRORMD5_newupload = Paths.get(fileStorageProperties.getERRORMD5_newuploadDir())
+                .toAbsolutePath().normalize();
 
         try {
             Files.createDirectories(this.fileStorageLocation);
             Files.createDirectories(this.annotatedFileStorageLocation);
             Files.createDirectories(this.jsonFileStorageLocation);
             Files.createDirectories(this.csvFileStorageLocation);
+            Files.createDirectories(this.newFileFileStorageLocation);
+            Files.createDirectories(this.ERRORMD5_mainupload);
+            Files.createDirectories(this.ERRORMD5_newupload);
+            
         } catch (Exception ex) {
             throw new FileStorageException(
                             "Could not create the directory where the uploaded files will be stored.",
@@ -298,7 +312,8 @@ public class FileStorageService {
                 Integer startIndex = annotationDetail.getStart();
                 Integer endIndex = annotationDetail.getEnd();
                 String actualValue = annotatedData.substring(startIndex, endIndex);
-
+                String oldData = getDataFromFilePath(
+                        this.fileStorageLocation.resolve(fileName + TYPE_HTML));
                 if (expectedValue.compareTo(actualValue) == 0) {
                     String subAnnotatedData = annotatedData.substring(0, startIndex);
                     matcher = pattern.matcher(subAnnotatedData);
@@ -317,7 +332,7 @@ public class FileStorageService {
                     matcher = pattern.matcher(annotationDetail.getValue());
                     annotationDetail.setValue(matcher.replaceAll(""));
                     annotationDetailsForCSVs.add(dtoMapper.getAnnotationDetailsForCSV(
-                                    annotationDetail, fileName, "User_1", diffStart, diffEnd));
+                                    annotationDetail, fileName, "User_1", diffStart, diffEnd,oldData));
 
 
                 } else {
@@ -332,9 +347,9 @@ public class FileStorageService {
             String mainHTML = matcher.replaceAll("");
             String oldData = getDataFromFilePath(
                             this.fileStorageLocation.resolve(fileName + TYPE_HTML));
-            //checkMd5SumForOldAndNewFile(oldData, mainHTML);
+            checkMd5SumForOldAndNewFile(oldData, mainHTML,fileName);
             writeDataToFile(mainHTML,
-                            this.fileStorageLocation.resolve(fileName + TYPE_HTML).toString());
+                            this.newFileFileStorageLocation.resolve(fileName + TYPE_HTML).toString());
             writeToCSV(annotationDetailsForCSVs,
                             this.csvFileStorageLocation.resolve(fileName + TYPE_CSV).toString());
         } catch (Exception ex) {
@@ -344,7 +359,7 @@ public class FileStorageService {
     }
 
 
-    private void checkMd5SumForOldAndNewFile(String oldData, String newData) throws Exception {
+    private void checkMd5SumForOldAndNewFile(String oldData, String newData,String fileName) throws Exception {
 
         String oldMd5Sum = getMd5Sum(oldData);
         String newMd5Sum = getMd5Sum(newData);
@@ -354,9 +369,15 @@ public class FileStorageService {
                             oldData);
             logger.error("NEW Resume Data. : ############################{}############################",
                             newData);
+            writeDataToFile(oldData,
+                    this.ERRORMD5_mainupload.resolve(fileName + TYPE_HTML).toString());
+            writeDataToFile(newData,
+                    this.ERRORMD5_newupload.resolve(fileName + TYPE_HTML).toString());
+            
             throw new Exception("Old and New Md5Sums are not same. Please have a look");
 
         }
+        
     }
 
 
@@ -386,7 +407,7 @@ public class FileStorageService {
     private static Boolean writeToCSV(ArrayList<AnnotationDetailsForCSV> details,
                     String csvFileName) {
         try (BufferedWriter bw = new BufferedWriter(
-                        new OutputStreamWriter(new FileOutputStream(csvFileName), "UTF-8"))) {
+                        new FileWriter(csvFileName))){
 
             for (AnnotationDetailsForCSV detail : details) {
                 StringBuffer oneLine = new StringBuffer();
@@ -399,6 +420,8 @@ public class FileStorageService {
                 oneLine.append(detail.getTag());
                 oneLine.append(CSV_SEPARATOR);
                 oneLine.append(detail.getUser());
+                oneLine.append(CSV_SEPARATOR);
+                oneLine.append(detail.getText());
                 bw.write(oneLine.toString());
                 bw.newLine();
             }
@@ -412,8 +435,8 @@ public class FileStorageService {
     }
 
     public void writeDataToFile(String data, String fileName) throws IOException {
-
-        try (FileOutputStream outputStream = new FileOutputStream(fileName)) {
+    	
+        try (FileOutputStream outputStream = new FileOutputStream(fileName,false)) {
             byte[] strToBytes = data.getBytes();
             outputStream.write(strToBytes);
             // outputStream.close();
@@ -451,7 +474,7 @@ public class FileStorageService {
         
         int attributeId = 0;
         int x = 1;
-        String patternStr = "(<\\s*[a-zA-Z]+)";
+        String patternStr = "(<\\s*[a-zA-Z]+[1-6]*)";
         Pattern pattern = Pattern.compile(patternStr);    
         Matcher matcher = null;    
         String newData = "";

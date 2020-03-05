@@ -1,0 +1,12 @@
+{"properties": [
+  {
+    "name": "file.ERRORMD5_mainupload-dir",
+    "type": "java.lang.String",
+    "description": "A description for 'file.ERRORMD5_mainupload-dir'"
+  },
+  {
+    "name": "file.ERRORMD5_newupload-dir",
+    "type": "java.lang.String",
+    "description": "A description for 'file.ERRORMD5_newupload-dir'"
+  }
+]}
